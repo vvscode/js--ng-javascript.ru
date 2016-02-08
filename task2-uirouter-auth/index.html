@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html ng-app="appModule">
+
+<head>
+    <meta charset="utf-8" />
+    <link data-require="bootstrap-css@3.3.6" data-semver="3.3.6" rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.css" />
+</head>
+
+<body>
+<div class="container">
+    <a ui-sref="login">login page</a> |
+    <a ui-sref="private">private page</a>
+    <hr>
+    <div ui-view></div>
+</div>
+
+<script data-require="jquery@*" data-semver="2.1.4" src="https://code.jquery.com/jquery-2.1.4.js"></script>
+<script data-require="bootstrap@3.3.6" data-semver="3.3.6" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script data-require="angular.js@1.4.8" data-semver="1.4.8" src="https://code.angularjs.org/1.4.8/angular.js"></script>
+<script data-require="ui-router@0.2.15" data-semver="0.2.15" src="https://cdn.rawgit.com/angular-ui/ui-router/805e69bae319e922e4d3265b7ef565058aaff850/release/angular-ui-router.js"></script>
+
+<script>
+    var appModule = angular.module("appModule", ["ui.router"]);
+
+    appModule.config(function($stateProvider, $urlRouterProvider) {
+        // $urlRouterProvider.otherwise("/login");
+
+        $stateProvider
+                .state("login", {
+                    url: "/login",
+                    templateUrl: "login.html",
+                    controller: function($rootScope, $scope, $state) {
+                        this.user = {};
+                        $rootScope.isLoggedIn = false;
+
+                        var self = this;
+                        this.logIn = function() {
+                            debugger;
+                            if (!self.user.login || !self.user.pass) {
+                                alert ("provile login and pass");
+                                $rootScope.isLoggedIn = false;
+
+                                return;
+                            }
+
+                            $rootScope.isLoggedIn = true;
+                            $rootScope.login = self.user.login;
+                            $rootScope.pass = self.user.pass;
+                            $state.go("private");
+                        };
+                    },
+                    controllerAs: "ctrl",
+                })
+                .state("private", {
+                    url: "/private",
+                    templateUrl: "private.html",
+                    resolve: {
+                        isLoggedIn: function($rootScope, $q) {
+                            if ($rootScope.isLoggedIn) {
+                                return $q.resolve();
+                            }
+
+                            alert("log in first!");
+                            return $q.reject();
+                        },
+                    },
+                });
+    });
+</script>
+</body>
+
+</html>
