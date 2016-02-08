@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html ng-app="userCards">
+<head><base href="/"></head>
+<body>
+
+<ui-view></ui-view>
+
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular-mocks.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.15/angular-ui-router.js"></script>
+<script>
+    const app = angular.module('userCards', ['ui.router', 'ngMockE2E']);
+
+    app.service('authRejector', function($q, $injector){
+        this.responseError = (rejection) => {
+            if(rejection.status === 401) {
+                $injector.get('$state').go('login');
+            }
+            return $q.reject(rejection);
+        }
+    });
+
+    app.config(function($httpProvider, $stateProvider, $urlRouterProvider) {
+
+        $httpProvider.interceptors.push('authRejector');
+
+        $stateProvider
+                .state('login', {
+                    url: '/login',
+                    template: '<login-page></login-page>'
+                })
+                .state('users', {
+                    url: '/users',
+                    template: '<user-list></user-list>'
+                })
+
+        $urlRouterProvider.otherwise('users');
+    });
+
+    app.run(function($httpBackend){
+        var usersObject = [{name: 'John'}];
+
+        $httpBackend.whenGET('/users').respond(() => {
+            return [401, {message: 'Login error'}];
+    });
+    });
+
+    app.directive('userList', function($http) {
+        return {
+            template: '<h1>USERS({{users.length}})</h1>',
+            link: function(scope) {
+                $http.get('/users').then(function(users){
+                    scope.users = users.data;
+                });
+            }
+        };
+    });
+
+    app.directive('loginPage', function(AuthService) {
+        return {
+            template: '<input ng-model="login"><input ng-model="password"><button ng-click="doLogin(login, password)">login</button>',
+            link: function(scope){
+                scope.doLogin = (login, password) => {
+                    return AuthService.authorize(login, password);
+                }
+            }
+        };
+    });
+
+    app.service('AuthService', function() {
+        var isLogin = false;
+        this.authorize = (login, password) => {
+            if(login == 1 && password == 1) {
+                isLogin = true;
+            } else {
+                isLogin = false;
+            }
+            return isLogin;
+        }
+
+        this.isAuthorized = () => isLogin;
+    });
+
+</script>
+
+</body>
+</html>
